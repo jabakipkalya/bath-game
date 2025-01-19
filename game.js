@@ -41,16 +41,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Touch event handling
+    let isDragging = false;
+    let currentDragItem = null;
+    let touchOffset = { x: 0, y: 0 };
+
     // Initialize draggable items
     document.querySelectorAll('.item').forEach(item => {
+        // Mouse events
         item.addEventListener('dragstart', handleDragStart);
         item.addEventListener('dragend', handleDragEnd);
         item.addEventListener('click', handleItemClick);
+
+        // Touch events
+        item.addEventListener('touchstart', handleTouchStart, { passive: false });
+        item.addEventListener('touchmove', handleTouchMove, { passive: false });
+        item.addEventListener('touchend', handleTouchEnd);
     });
 
     // Add drop zone event listeners
     bathTub.addEventListener('dragover', handleDragOver);
     bathTub.addEventListener('drop', handleDrop);
+
+    function handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const item = e.target;
+        
+        isDragging = true;
+        currentDragItem = item;
+        document.body.classList.add('dragging');
+        
+        const rect = item.getBoundingClientRect();
+        touchOffset.x = touch.clientX - rect.left;
+        touchOffset.y = touch.clientY - rect.top;
+        
+        item.classList.add('dragging');
+    }
+
+    function handleTouchMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const item = currentDragItem;
+        
+        const x = touch.clientX - touchOffset.x;
+        const y = touch.clientY - touchOffset.y;
+        
+        item.style.position = 'fixed';
+        item.style.left = x + 'px';
+        item.style.top = y + 'px';
+    }
+
+    function handleTouchEnd(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        const touch = e.changedTouches[0];
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (dropTarget && (dropTarget === bathTub || dropTarget.closest('#bath-tub'))) {
+            const rect = bathTub.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            handleDrop({
+                preventDefault: () => {},
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                dataTransfer: {
+                    getData: () => currentDragItem.dataset.item
+                }
+            });
+        }
+        
+        isDragging = false;
+        currentDragItem.style.position = '';
+        currentDragItem.style.left = '';
+        currentDragItem.style.top = '';
+        currentDragItem.classList.remove('dragging');
+        currentDragItem = null;
+        document.body.classList.remove('dragging');
+    }
 
     function createSplash(x, y, text) {
         const splash = document.createElement('div');
@@ -117,8 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
         score += 10;
         scoreElement.textContent = score;
         
-        // Add click listener for interaction
+        // Add click/touch listener for interaction
         newItem.addEventListener('click', () => {
+            newItem.classList.add('in-use');
+            createSplash(x, y, bathItems[itemType].sound);
+            setTimeout(() => newItem.classList.remove('in-use'), 2000);
+        });
+        
+        newItem.addEventListener('touchstart', (e) => {
+            e.preventDefault();
             newItem.classList.add('in-use');
             createSplash(x, y, bathItems[itemType].sound);
             setTimeout(() => newItem.classList.remove('in-use'), 2000);

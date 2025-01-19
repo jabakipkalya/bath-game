@@ -228,3 +228,109 @@ h1 {
 .instructions.hidden {
     display: none;
 }
+
+.creator {
+    margin-top: 20px;
+    color: #1565c0;
+    font-size: 1.1em;
+    text-align: center;
+    padding: 10px;
+    border-top: 2px solid #e3f2fd;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .game-container {
+        width: 95%;
+        padding: 10px;
+        margin: 10px auto;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .game-area {
+        width: 100%;
+        height: 300px;
+    }
+
+    .items-shelf {
+        gap: 10px;
+    }
+
+    .item {
+        padding: 8px 15px;
+        font-size: 1em;
+        width: calc(50% - 20px);
+        text-align: center;
+    }
+
+    .instructions {
+        max-width: 95%;
+    }
+
+    .instructions p {
+        font-size: 1em;
+    }
+
+    .bath-item {
+        font-size: 1.5em;
+    }
+
+    .splash {
+        font-size: 1.2em;
+    }
+
+    #reset-game {
+        width: 100%;
+        margin-top: 15px;
+    }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.8em;
+    }
+
+    .game-area {
+        height: 250px;
+    }
+
+    .item {
+        width: calc(100% - 20px);
+        margin: 5px 0;
+    }
+
+    .instructions h2 {
+        font-size: 1.3em;
+    }
+
+    .instructions p {
+        font-size: 0.9em;
+    }
+
+    .score {
+        font-size: 1.2em;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+    .item {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+    }
+
+    .item:active {
+        transform: scale(1.1);
+        background-color: #64b5f6;
+    }
+}
+
+/* Prevent scrolling while dragging on mobile */
+body.dragging {
+    overflow: hidden;
+    touch-action: none;
+}
