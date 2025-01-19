@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bath Time Fun!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>Bath Time Fun!</h1>
+        <div class="instructions">
+            <h2>How to Play:</h2>
+            <p>1. Drag the bath items from below into the bathtub 🛁</p>
+            <p>2. Watch how each item behaves differently!</p>
+            <p>3. Score points for each item you place correctly ⭐</p>
+            <button id="hide-instructions">Got it!</button>
+        </div>
+        <div class="score">Score: <span id="score">0</span></div>
+        <div class="game-area">
+            <div id="bath-tub">
+                <div class="water-effect"></div>
+            </div>
+            <div id="items-container"></div>
+        </div>
+        <div class="items-shelf">
+            <div class="item" draggable="true" data-item="rubber-duck">🦆 Duck (Floats)</div>
+            <div class="item" draggable="true" data-item="soap">🧼 Soap (Scrubs)</div>
+            <div class="item" draggable="true" data-item="shampoo">🧴 Shampoo (Squeeze)</div>
+            <div class="item" draggable="true" data-item="towel">🧺 Towel (Dries)</div>
+            <div class="item" draggable="true" data-item="brush">🧹 Brush (Scrubs)</div>
+        </div>
+        <button id="reset-game">Start New Game</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
