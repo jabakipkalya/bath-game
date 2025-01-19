@@ -320,17 +320,23 @@ h1 {
 @media (hover: none) {
     .item {
         -webkit-tap-highlight-color: transparent;
-        touch-action: none;
+        transition: transform 0.2s, background-color 0.2s;
+        cursor: pointer;
     }
 
-    .item:active {
-        transform: scale(1.1);
+    .item.tapped {
+        transform: scale(0.95);
         background-color: #64b5f6;
     }
 }
 
-/* Prevent scrolling while dragging on mobile */
-body.dragging {
-    overflow: hidden;
-    touch-action: none;
+@media (hover: none) {
+    .dragging {
+        opacity: 1;
+    }
+
+    body.dragging {
+        overflow: initial;
+        touch-action: initial;
+    }
 }

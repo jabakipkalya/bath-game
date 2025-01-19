@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetButton = document.getElementById('reset-game');
     const instructions = document.querySelector('.instructions');
     const hideInstructionsButton = document.getElementById('hide-instructions');
+    
+    // Detect if device is touch-enabled
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
     // Bath items with their correct positions and behaviors
     const bathItems = {
@@ -41,88 +44,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Touch event handling
-    let isDragging = false;
-    let currentDragItem = null;
-    let touchOffset = { x: 0, y: 0 };
+    // Update instructions based on device
+    if (isTouchDevice) {
+        document.querySelectorAll('.instructions p').forEach(p => {
+            if (p.textContent.includes('Drag')) {
+                p.textContent = p.textContent.replace('Drag', 'Tap');
+            }
+        });
+    }
 
-    // Initialize draggable items
+    // Initialize items
     document.querySelectorAll('.item').forEach(item => {
-        // Mouse events
-        item.addEventListener('dragstart', handleDragStart);
-        item.addEventListener('dragend', handleDragEnd);
-        item.addEventListener('click', handleItemClick);
-
-        // Touch events
-        item.addEventListener('touchstart', handleTouchStart, { passive: false });
-        item.addEventListener('touchmove', handleTouchMove, { passive: false });
-        item.addEventListener('touchend', handleTouchEnd);
+        if (isTouchDevice) {
+            // Remove draggable attribute on touch devices
+            item.removeAttribute('draggable');
+            // Add tap handler
+            item.addEventListener('click', handleTapToPlace);
+        } else {
+            // Desktop drag and drop
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragend', handleDragEnd);
+        }
     });
 
-    // Add drop zone event listeners
-    bathTub.addEventListener('dragover', handleDragOver);
-    bathTub.addEventListener('drop', handleDrop);
-
-    function handleTouchStart(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const item = e.target;
-        
-        isDragging = true;
-        currentDragItem = item;
-        document.body.classList.add('dragging');
-        
-        const rect = item.getBoundingClientRect();
-        touchOffset.x = touch.clientX - rect.left;
-        touchOffset.y = touch.clientY - rect.top;
-        
-        item.classList.add('dragging');
+    // Add drop zone event listeners for desktop
+    if (!isTouchDevice) {
+        bathTub.addEventListener('dragover', handleDragOver);
+        bathTub.addEventListener('drop', handleDrop);
     }
 
-    function handleTouchMove(e) {
-        if (!isDragging) return;
-        e.preventDefault();
+    function handleTapToPlace(e) {
+        const itemType = e.target.dataset.item;
+        const tubRect = bathTub.getBoundingClientRect();
         
-        const touch = e.touches[0];
-        const item = currentDragItem;
+        // Calculate a random position within the bathtub
+        const randomX = Math.random() * (tubRect.width - 50); // 50px buffer for item size
+        const randomY = Math.random() * (tubRect.height - 50);
         
-        const x = touch.clientX - touchOffset.x;
-        const y = touch.clientY - touchOffset.y;
+        // Create and position the new item
+        const newItem = document.createElement('div');
+        newItem.className = `bath-item ${itemType}`;
+        newItem.textContent = bathItems[itemType].emoji;
         
-        item.style.position = 'fixed';
-        item.style.left = x + 'px';
-        item.style.top = y + 'px';
-    }
-
-    function handleTouchEnd(e) {
-        if (!isDragging) return;
-        e.preventDefault();
+        newItem.style.left = `${randomX}px`;
+        newItem.style.top = `${randomY}px`;
         
-        const touch = e.changedTouches[0];
-        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        // Add to container
+        itemsContainer.appendChild(newItem);
         
-        if (dropTarget && (dropTarget === bathTub || dropTarget.closest('#bath-tub'))) {
-            const rect = bathTub.getBoundingClientRect();
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-            
-            handleDrop({
-                preventDefault: () => {},
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                dataTransfer: {
-                    getData: () => currentDragItem.dataset.item
-                }
-            });
-        }
+        // Create splash effect
+        createSplash(randomX, randomY, bathItems[itemType].sound);
         
-        isDragging = false;
-        currentDragItem.style.position = '';
-        currentDragItem.style.left = '';
-        currentDragItem.style.top = '';
-        currentDragItem.classList.remove('dragging');
-        currentDragItem = null;
-        document.body.classList.remove('dragging');
+        // Update score
+        score += 10;
+        scoreElement.textContent = score;
+        
+        // Add interaction handler
+        newItem.addEventListener('click', () => {
+            newItem.classList.add('in-use');
+            createSplash(randomX, randomY, bathItems[itemType].sound);
+            setTimeout(() => newItem.classList.remove('in-use'), 2000);
+        });
+        
+        // Position based on item type
+        animateItem(newItem, bathItems[itemType].position);
+        
+        // Add feedback animation to the shelf item
+        e.target.classList.add('tapped');
+        setTimeout(() => e.target.classList.remove('tapped'), 200);
     }
 
     function createSplash(x, y, text) {
@@ -135,21 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => splash.remove(), 1000);
     }
 
-    function handleItemClick(e) {
-        const itemType = e.target.dataset.item;
-        const item = document.querySelector(`.bath-item.${itemType}`);
-        if (item) {
-            item.classList.add('in-use');
-            const rect = item.getBoundingClientRect();
-            createSplash(
-                rect.left - bathTub.getBoundingClientRect().left,
-                rect.top - bathTub.getBoundingClientRect().top,
-                bathItems[itemType].sound
-            );
-            setTimeout(() => item.classList.remove('in-use'), 2000);
-        }
-    }
-
+    // Desktop drag and drop handlers
     function handleDragStart(e) {
         e.target.classList.add('dragging');
         e.dataTransfer.setData('text/plain', e.target.dataset.item);
@@ -167,12 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const itemType = e.dataTransfer.getData('text/plain');
         
-        // Create new bath item
         const newItem = document.createElement('div');
         newItem.className = `bath-item ${itemType}`;
         newItem.textContent = bathItems[itemType].emoji;
         
-        // Position the item based on its type
         const rect = bathTub.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -180,31 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
         newItem.style.left = `${x}px`;
         newItem.style.top = `${y}px`;
         
-        // Add to container
         itemsContainer.appendChild(newItem);
-        
-        // Create splash effect
         createSplash(x, y, bathItems[itemType].sound);
         
-        // Update score
         score += 10;
         scoreElement.textContent = score;
         
-        // Add click/touch listener for interaction
         newItem.addEventListener('click', () => {
             newItem.classList.add('in-use');
             createSplash(x, y, bathItems[itemType].sound);
             setTimeout(() => newItem.classList.remove('in-use'), 2000);
         });
         
-        newItem.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            newItem.classList.add('in-use');
-            createSplash(x, y, bathItems[itemType].sound);
-            setTimeout(() => newItem.classList.remove('in-use'), 2000);
-        });
-        
-        // Position based on item type
         animateItem(newItem, bathItems[itemType].position);
     }
 
